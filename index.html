@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gaelic Football Match Reminders</title>
   <style>
+    /* --- Mobile-first, iPhone 11 friendly --- */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+
     :root {
       --bg: #0f172a; /* slate-900 */
       --panel: #111827; /* gray-900 */
@@ -16,67 +20,74 @@
       --warn: #f59e0b; /* amber-500 */
       --card: #0b1220; /* darker */
     }
-    html, body {
-      height: 100%;
-      margin: 0;
+
+    body{
       background: radial-gradient(1200px 600px at 50% -10%, #0b1325 0%, var(--bg) 40%, #030712 100%);
       color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
+      padding-left: calc(12px + env(safe-area-inset-left));
+      padding-right: calc(12px + env(safe-area-inset-right));
+      padding-top: calc(8px + env(safe-area-inset-top));
+      padding-bottom: calc(8px + env(safe-area-inset-bottom));
     }
-    .container{
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 16px;
-    }
-    .app-title{
-      font-size: clamp(22px, 3.5vw, 38px);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      display:flex; align-items:center; gap:12px;
-    }
-    .badge{
-      font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #134e4a; color:#a7f3d0; border:1px solid #115e59;
-    }
-    .grid{ display:grid; gap: 12px; }
-    @media(min-width: 900px){
-      .grid{ grid-template-columns: 2fr 1fr; }
-    }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0));
-      border: 1px solid rgba(148,163,184,0.12);
-      border-radius: 16px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    }
-    .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
-    .row > * { flex: none; }
+
+    .container{ max-width: 980px; width: 100%; margin: 0 auto; }
+
+    .app-title{ font-size: clamp(20px, 5vw, 36px); font-weight: 800; letter-spacing: -0.02em; display:flex; align-items:center; gap:10px; min-width:0; }
+    .badge{ font-size: 11px; padding: 4px 8px; border-radius: 999px; background: #134e4a; color:#a7f3d0; border:1px solid #115e59; white-space: nowrap; }
+
+    .grid{ display:grid; gap: 12px; grid-template-columns: 1fr; }
+    @media(min-width: 900px){ .grid{ grid-template-columns: 2fr 1fr; } }
+
+    .card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0)); border: 1px solid rgba(148,163,184,0.12); border-radius: 16px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+
+    .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; min-width:0; }
+    .row > * { min-width: 0; }
+
     button{
       appearance: none; border: 1px solid rgba(255,255,255,0.12); color: var(--text);
-      background: #111827; border-radius: 12px; padding: 10px 14px; font-weight: 700; cursor: pointer;
-      transition: transform .04s ease, background .2s ease, border-color .2s ease;
+      background: #111827; border-radius: 12px; padding: 10px 12px; font-weight: 700; cursor: pointer;
+      transition: transform .04s ease, background .2s ease, border-color .2s ease; font-size: 14px; line-height: 1.1; flex: 0 1 auto;
     }
     button:active{ transform: translateY(1px); }
     button.primary{ background: linear-gradient(180deg, #10b981, #059669); border-color: #064e3b; }
     button.warn{ background: linear-gradient(180deg, #f59e0b, #d97706); border-color: #92400e; }
     button.danger{ background: linear-gradient(180deg, #ef4444, #b91c1c); border-color: #7f1d1d; }
     button.ghost{ background: #0b1220; }
-    .timer{
-      font-variant-numeric: tabular-nums; font-size: clamp(36px, 8vw, 72px); font-weight: 900;
-    }
+
+    .controls button{ flex: 1 1 45%; }
+
+    .timer{ font-variant-numeric: tabular-nums; font-size: clamp(32px, 14vw, 64px); font-weight: 900; }
     .subtimer { color: var(--muted); font-variant-numeric: tabular-nums; }
+
     label{ font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
-    input, select, textarea{
-      width: 100%; background: #0b1220; border: 1px solid rgba(148,163,184,0.18); color: var(--text);
-      border-radius: 10px; padding: 10px 12px; outline: none;
-    }
-    table{ width: 100%; border-collapse: collapse; }
-    th, td{ padding: 10px; border-bottom: 1px solid rgba(148,163,184,0.16); text-align: left; }
-    th{ font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-    .pill{ padding: 4px 8px; border-radius: 999px; background:#0b1220; border:1px solid rgba(255,255,255,0.12); font-size:12px; }
+    input, select, textarea{ width: 100%; background: #0b1220; border: 1px solid rgba(148,163,184,0.18); color: var(--text); border-radius: 10px; padding: 10px 12px; outline: none; min-width: 0; }
+
+    .table-wrap{ width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table{ width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 480px; }
+    th, td{ padding: 10px; border-bottom: 1px solid rgba(148,163,184,0.16); text-align: left; vertical-align: top; }
+    th{ font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+    th:nth-child(1){ width: 70px; }
+    th:nth-child(2){ width: 70px; }
+    th:nth-child(4){ width: 70px; }
+    td:nth-child(3){ word-break: break-word; }
+
+    .pill{ padding: 4px 8px; border-radius: 999px; background:#0b1220; border:1px solid rgba(255,255,255,0.12); font-size:12px; white-space: nowrap; }
     .muted{ color: var(--muted); }
     .footer{ color: var(--muted); font-size:12px; text-align:center; margin-top: 14px; }
     .hint{ font-size:12px; color: var(--muted); }
     .spacer{ height: 8px; }
     .section-title{ font-weight:800; letter-spacing:-0.02em; }
+
     .sticky-bar{ position: sticky; top: 0; z-index: 3; backdrop-filter: blur(8px); background: rgba(2,6,23,0.75); border-bottom:1px solid rgba(148,163,184,0.12); padding:8px 0; margin-bottom:10px; }
+
+    /* Compact the sticky header on small screens */
+    @media (max-width: 480px){
+      .sticky-bar .row{ flex-direction: column; align-items: stretch; gap:8px; }
+      .controls{ width: 100%; display:flex; flex-wrap: wrap; gap:8px; }
+      .app-title{ font-size: 20px; }
+      button{ padding: 10px 10px; font-size: 13px; }
+    }
   </style>
 </head>
 <body>
@@ -84,7 +95,7 @@
     <div class="sticky-bar">
       <div class="row" style="justify-content: space-between;">
         <div class="app-title">🏐 Gaelic Match Reminders <span class="badge">60 min · 2 × 30</span></div>
-        <div class="row">
+        <div class="controls row">
           <button id="btnStartH1" class="primary">Start 1st Half</button>
           <button id="btnStartH2" class="warn">Start 2nd Half</button>
           <button id="btnPause" class="ghost">Pause</button>
@@ -107,17 +118,19 @@
           </div>
         </div>
         <div class="spacer"></div>
-        <table>
-          <thead>
-            <tr>
-              <th>Half</th>
-              <th>Time</th>
-              <th>Reminder</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="reminderRows"></tbody>
-        </table>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Half</th>
+                <th>Time</th>
+                <th>Reminder</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="reminderRows"></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Right: Settings & Add Reminder -->
