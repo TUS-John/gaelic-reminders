@@ -292,8 +292,17 @@
 
       <p class="footer">
         Tip: Add this page to your phone’s home screen. Reminders are saved
-        locally. <span id="appVersion">v1.0.0</span>
+        locally. <span id="appVersion"></span>
       </p>
+
+      <script>
+        // App version
+        window.APP_VERSION = "1.0.1";
+
+        // Dynamically set the app version
+        document.getElementById("appVersion").textContent =
+          "v" + window.APP_VERSION;
+      </script>
     </div>
 
     <script>
@@ -555,9 +564,6 @@
       })();
     </script>
     <script>
-      // App version
-      window.APP_VERSION = "1.0.1";
-
       // Register the Service Worker and handle update prompt
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
