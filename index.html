@@ -94,12 +94,43 @@ if ('serviceWorker' in navigator) {
 
   let reminders=loadReminders(); let half=0; let hStart=[null,null]; let paused=false; let pauseAnchor=null; let pausedAccum=[0,0]; let timerId=null;
 
+  // --- Speech / Voices ---
+  function speechReady(){ return 'speechSynthesis' in window; }
+  function populateVoices(){
+    if(!speechReady()) { voiceSelect.innerHTML = '<option value="">Speech unavailable</option>'; return; }
+    const vs = window.speechSynthesis.getVoices();
+    if(!vs || !vs.length){
+      // iOS sometimes loads voices lazily; show placeholder
+      voiceSelect.innerHTML = '<option value="">System default</option>';
+      return;
+    }
+    voiceSelect.innerHTML = vs.map(v=>`<option value="${v.name}">${v.name} ${v.lang?('['+v.lang+']'):''}</option>`).join('');
+    // Try to pick an English/Irish voice if present
+    const prefIdx = vs.findIndex(v=>/^(en-|ga-)/i.test(v.lang||''));
+    if(prefIdx>=0) voiceSelect.selectedIndex = prefIdx;
+  }
+  if(speechReady()){
+    populateVoices();
+    // Some browsers (iOS/Safari) fire this after a user gesture
+    window.speechSynthesis.onvoiceschanged = populateVoices;
+  }
+
+
   function fmt(t){t=Math.max(0,Math.floor(t));return String(Math.floor(t/60)).padStart(2,'0')+":"+String(t%60).padStart(2,'0');}
   function now(){return Date.now();}
 
   function beep(){const ctx=new (window.AudioContext||window.webkitAudioContext)();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=880;gain.gain.value=Number(volume.value||0.8);osc.connect(gain).connect(ctx.destination);osc.start();setTimeout(()=>{osc.stop();ctx.close();},300);}
 
-  function speak(text){if(!('speechSynthesis'in window))return;const u=new SpeechSynthesisUtterance(text);u.volume=Number(volume.value||0.8);window.speechSynthesis.speak(u);}
+  function speak(text){
+    if(!speechReady()) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const vs = window.speechSynthesis.getVoices();
+    const sel = voiceSelect && voiceSelect.value;
+    const v = vs && vs.find(x=>x.name===sel);
+    if(v) u.voice = v;
+    u.volume = Number(volume.value || 0.8);
+    window.speechSynthesis.speak(u);
+  }
 
   async function pushNotify(title,body){
     if(!('Notification'in window)||!('serviceWorker'in navigator))return;
@@ -133,6 +164,9 @@ if ('serviceWorker' in navigator) {
   btnTest.onclick=()=>alertUser('Test reminder');
 
   renderReminders();
+
+  // If voices are still empty after 1s (iOS quirk), try again
+  setTimeout(()=>{ if(voiceSelect && !voiceSelect.options.length) populateVoices(); }, 1000);
 })();
 </script>
 </body>
