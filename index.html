@@ -92,10 +92,6 @@
   </div>
 
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js');
-}
-
 (function(){
   const $ = (id)=>document.getElementById(id);
   const reminderRows = $("reminderRows");
@@ -221,9 +217,13 @@ if ('serviceWorker' in navigator) {
       });
 
       // Once the new SW activates, reload the page
+      let __hasRefreshed = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (__hasRefreshed) return; // prevent reload loop (Safari quirk)
+        __hasRefreshed = true;
         window.location.reload();
       });
+
     })
     .catch(()=>{});
 }
