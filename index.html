@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gaelic Football Match Reminders</title>
   <style>
-    /* --- Mobile-first, iPhone 11 friendly --- */
+    /* --- Mobile-first, iPhone 11 tuned --- */
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
 
@@ -15,7 +15,6 @@
       --muted: #94a3b8; /* slate-400 */
       --text: #e5e7eb; /* gray-200 */
       --accent: #22c55e; /* green-500 */
-      --accent-2: #38bdf8; /* sky-400 */
       --danger: #ef4444; /* red-500 */
       --warn: #f59e0b; /* amber-500 */
       --card: #0b1220; /* darker */
@@ -25,15 +24,12 @@
       background: radial-gradient(1200px 600px at 50% -10%, #0b1325 0%, var(--bg) 40%, #030712 100%);
       color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
-      padding-left: calc(12px + env(safe-area-inset-left));
-      padding-right: calc(12px + env(safe-area-inset-right));
-      padding-top: calc(8px + env(safe-area-inset-top));
-      padding-bottom: calc(8px + env(safe-area-inset-bottom));
+      padding: 10px calc(12px + env(safe-area-inset-left)) 12px calc(12px + env(safe-area-inset-right));
     }
 
     .container{ max-width: 980px; width: 100%; margin: 0 auto; }
 
-    .app-title{ font-size: clamp(20px, 5vw, 36px); font-weight: 800; letter-spacing: -0.02em; display:flex; align-items:center; gap:10px; min-width:0; }
+    .app-title{ font-size: clamp(20px, 5vw, 36px); font-weight: 800; letter-spacing: -0.02em; display:flex; align-items:center; gap:10px; min-width:0; flex-wrap:wrap; }
     .badge{ font-size: 11px; padding: 4px 8px; border-radius: 999px; background: #134e4a; color:#a7f3d0; border:1px solid #115e59; white-space: nowrap; }
 
     .grid{ display:grid; gap: 12px; grid-template-columns: 1fr; }
@@ -41,13 +37,14 @@
 
     .card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0)); border: 1px solid rgba(148,163,184,0.12); border-radius: 16px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
 
-    .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; min-width:0; }
+    .row{ display:flex; gap:8px; flex-wrap: wrap; align-items:center; min-width:0; }
     .row > * { min-width: 0; }
 
+    /* Buttons */
     button{
       appearance: none; border: 1px solid rgba(255,255,255,0.12); color: var(--text);
       background: #111827; border-radius: 12px; padding: 10px 12px; font-weight: 700; cursor: pointer;
-      transition: transform .04s ease, background .2s ease, border-color .2s ease; font-size: 14px; line-height: 1.1; flex: 0 1 auto;
+      transition: transform .04s ease, background .2s ease, border-color .2s ease; font-size: 14px; line-height: 1.1; flex: 1 1 48%;
     }
     button:active{ transform: translateY(1px); }
     button.primary{ background: linear-gradient(180deg, #10b981, #059669); border-color: #064e3b; }
@@ -55,22 +52,34 @@
     button.danger{ background: linear-gradient(180deg, #ef4444, #b91c1c); border-color: #7f1d1d; }
     button.ghost{ background: #0b1220; }
 
-    .controls button{ flex: 1 1 45%; }
+    /* Header (non-sticky as requested) */
+    .topbar{ margin-bottom: 10px; }
 
+    /* Timer */
     .timer{ font-variant-numeric: tabular-nums; font-size: clamp(32px, 14vw, 64px); font-weight: 900; }
     .subtimer { color: var(--muted); font-variant-numeric: tabular-nums; }
 
+    /* Inputs */
     label{ font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
-    input, select, textarea{ width: 100%; background: #0b1220; border: 1px solid rgba(148,163,184,0.18); color: var(--text); border-radius: 10px; padding: 10px 12px; outline: none; min-width: 0; }
+    input, select, textarea{ width: 100%; max-width: 100%; background: #0b1220; border: 1px solid rgba(148,163,184,0.18); color: var(--text); border-radius: 10px; padding: 10px 12px; outline: none; min-width: 0; }
+    select{ appearance: none; }
+    .field{ flex:1 1 140px; min-width: 140px; }
+    .field.small{ flex:1 1 110px; min-width: 110px; }
 
-    .table-wrap{ width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table{ width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 480px; }
+    /* Volume row forces full-width slider on mobile; Test goes to next line */
+    .volume-row{ display:grid; grid-template-columns: 1fr; gap:8px; align-items:center; }
+    .volume-row .inline{ display:flex; gap:8px; align-items:center; }
+    input[type="range"]{ width: 100%; }
+
+    /* Table: no min-width, wrap text, avoid horizontal scroll */
+    .table-wrap{ width: 100%; overflow-x: hidden; }
+    table{ width: 100%; border-collapse: collapse; table-layout: auto; }
     th, td{ padding: 10px; border-bottom: 1px solid rgba(148,163,184,0.16); text-align: left; vertical-align: top; }
     th{ font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-    th:nth-child(1){ width: 70px; }
-    th:nth-child(2){ width: 70px; }
-    th:nth-child(4){ width: 70px; }
     td:nth-child(3){ word-break: break-word; }
+    th:nth-child(1), td:nth-child(1){ width: 64px; }
+    th:nth-child(2), td:nth-child(2){ width: 64px; }
+    th:nth-child(4), td:nth-child(4){ width: 70px; }
 
     .pill{ padding: 4px 8px; border-radius: 999px; background:#0b1220; border:1px solid rgba(255,255,255,0.12); font-size:12px; white-space: nowrap; }
     .muted{ color: var(--muted); }
@@ -79,23 +88,22 @@
     .spacer{ height: 8px; }
     .section-title{ font-weight:800; letter-spacing:-0.02em; }
 
-    .sticky-bar{ position: sticky; top: 0; z-index: 3; backdrop-filter: blur(8px); background: rgba(2,6,23,0.75); border-bottom:1px solid rgba(148,163,184,0.12); padding:8px 0; margin-bottom:10px; }
-
-    /* Compact the sticky header on small screens */
-    @media (max-width: 480px){
-      .sticky-bar .row{ flex-direction: column; align-items: stretch; gap:8px; }
-      .controls{ width: 100%; display:flex; flex-wrap: wrap; gap:8px; }
+    /* Small-screen tightening */
+    @media (max-width: 420px){
       .app-title{ font-size: 20px; }
       button{ padding: 10px 10px; font-size: 13px; }
+      .controls{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; width:100%; }
+      .field{ flex:1 1 160px; min-width: 160px; }
+      .field.small{ flex:1 1 120px; min-width: 120px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="sticky-bar">
+    <div class="topbar">
       <div class="row" style="justify-content: space-between;">
         <div class="app-title">🏐 Gaelic Match Reminders <span class="badge">60 min · 2 × 30</span></div>
-        <div class="controls row">
+        <div class="controls">
           <button id="btnStartH1" class="primary">Start 1st Half</button>
           <button id="btnStartH2" class="warn">Start 2nd Half</button>
           <button id="btnPause" class="ghost">Pause</button>
@@ -137,7 +145,7 @@
       <div class="card">
         <div class="section-title">Add Reminder</div>
         <div class="row">
-          <div style="flex:1">
+          <div class="field">
             <label for="half">Half</label>
             <select id="half">
               <option value="H1">1st Half</option>
@@ -145,11 +153,11 @@
               <option value="BOTH">Both Halves</option>
             </select>
           </div>
-          <div style="width:110px">
+          <div class="field small">
             <label for="minute">Minute</label>
             <input id="minute" type="number" min="0" max="30" step="1" value="10" />
           </div>
-          <div style="width:110px">
+          <div class="field small">
             <label for="second">Second</label>
             <input id="second" type="number" min="0" max="59" step="1" value="0" />
           </div>
@@ -168,27 +176,32 @@
           <label style="display:flex; align-items:center; gap:8px;"><input id="speechToggle" type="checkbox" checked> Use Speech</label>
           <label style="display:flex; align-items:center; gap:8px;"><input id="notifToggle" type="checkbox"> Push Notification</label>
         </div>
-        <div class="row" style="align-items: center;">
-          <div style="flex:1">
-            <label for="voiceSelect">Voice</label>
-            <select id="voiceSelect"></select>
+        <div class="volume-row">
+          <div class="inline">
+            <div style="flex:1">
+              <label for="voiceSelect">Voice</label>
+              <select id="voiceSelect"></select>
+            </div>
           </div>
-          <div style="width: 140px;">
-            <label for="volume">Volume</label>
-            <input id="volume" type="range" min="0" max="1" step="0.05" value="0.8" />
-          </div>
-          <div>
-            <button id="btnTest" class="ghost">Test</button>
+          <div class="inline">
+            <div style="flex:1">
+              <label for="volume">Volume</label>
+              <input id="volume" type="range" min="0" max="1" step="0.05" value="0.8" />
+            </div>
+            <div>
+              <label style="opacity:0">&nbsp;</label>
+              <button id="btnTest" class="ghost" style="white-space:nowrap;">Test</button>
+            </div>
           </div>
         </div>
         <p class="hint">Speech uses your device voice. Notifications require permission and may be silenced by system settings.</p>
         <div class="section-title">Match Settings</div>
         <div class="row">
-          <div style="width: 160px">
+          <div class="field small">
             <label for="halfLen">Half Length (min)</label>
             <input id="halfLen" type="number" min="1" max="45" step="1" value="30" />
           </div>
-          <div style="width: 160px">
+          <div class="field small">
             <label for="stoppage">Extra Time per Half (sec)</label>
             <input id="stoppage" type="number" min="0" max="600" step="5" value="0" />
           </div>
@@ -197,7 +210,7 @@
       </div>
     </div>
 
-    <p class="footer">Pro-tip: Add this page to your phone’s home screen for quick access during matches. Your reminders are saved locally.</p>
+    <p class="footer">Tip: Add this page to your phone’s home screen. Reminders are saved locally.</p>
   </div>
 
 <script>
@@ -425,7 +438,7 @@
     if(!speechReady()) { voiceSelect.innerHTML = '<option>Speech unavailable</option>'; return; }
     const vs = window.speechSynthesis.getVoices();
     voiceSelect.innerHTML = vs.map(v=>`<option value="${v.name}">${v.name} ${v.lang?('['+v.lang+']'):''}</option>`).join('');
-    // Try pick an English/Irish voice if present
+    // Prefer English/Irish voice if present
     const pref = vs.findIndex(v=>/en-|ga-/.test(v.lang||''));
     if(pref>=0) voiceSelect.selectedIndex = pref;
   }
