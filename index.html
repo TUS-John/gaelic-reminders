@@ -4,98 +4,36 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gaelic Football Match Reminders</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <style>
-    /* --- Mobile-first, iPhone 11 tuned --- */
+    /* keep existing styles from last version (mobile optimized) */
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
-
-    :root {
-      --bg: #0f172a; /* slate-900 */
-      --panel: #111827; /* gray-900 */
-      --muted: #94a3b8; /* slate-400 */
-      --text: #e5e7eb; /* gray-200 */
-      --accent: #22c55e; /* green-500 */
-      --danger: #ef4444; /* red-500 */
-      --warn: #f59e0b; /* amber-500 */
-      --card: #0b1220; /* darker */
-    }
-
-    body{
-      background: radial-gradient(1200px 600px at 50% -10%, #0b1325 0%, var(--bg) 40%, #030712 100%);
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
-      padding: 10px calc(12px + env(safe-area-inset-left)) 12px calc(12px + env(safe-area-inset-right));
-    }
-
+    :root { --bg: #0f172a; --panel: #111827; --muted: #94a3b8; --text: #e5e7eb; --accent: #22c55e; --danger: #ef4444; --warn: #f59e0b; --card: #0b1220; }
+    body{ background: radial-gradient(1200px 600px at 50% -10%, #0b1325 0%, var(--bg) 40%, #030712 100%); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"; padding: 10px; }
     .container{ max-width: 980px; width: 100%; margin: 0 auto; }
-
-    .app-title{ font-size: clamp(20px, 5vw, 36px); font-weight: 800; letter-spacing: -0.02em; display:flex; align-items:center; gap:10px; min-width:0; flex-wrap:wrap; }
-    .badge{ font-size: 11px; padding: 4px 8px; border-radius: 999px; background: #134e4a; color:#a7f3d0; border:1px solid #115e59; white-space: nowrap; }
-
+    .app-title{ font-size: clamp(20px, 5vw, 36px); font-weight: 800; display:flex; flex-wrap:wrap; gap:10px; }
+    .badge{ font-size: 11px; padding: 4px 8px; border-radius: 999px; background: #134e4a; color:#a7f3d0; }
     .grid{ display:grid; gap: 12px; grid-template-columns: 1fr; }
     @media(min-width: 900px){ .grid{ grid-template-columns: 2fr 1fr; } }
-
-    .card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0)); border: 1px solid rgba(148,163,184,0.12); border-radius: 16px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
-
-    .row{ display:flex; gap:8px; flex-wrap: wrap; align-items:center; min-width:0; }
-    .row > * { min-width: 0; }
-
-    /* Buttons */
-    button{
-      appearance: none; border: 1px solid rgba(255,255,255,0.12); color: var(--text);
-      background: #111827; border-radius: 12px; padding: 10px 12px; font-weight: 700; cursor: pointer;
-      transition: transform .04s ease, background .2s ease, border-color .2s ease; font-size: 14px; line-height: 1.1; flex: 1 1 48%;
-    }
-    button:active{ transform: translateY(1px); }
-    button.primary{ background: linear-gradient(180deg, #10b981, #059669); border-color: #064e3b; }
-    button.warn{ background: linear-gradient(180deg, #f59e0b, #d97706); border-color: #92400e; }
-    button.danger{ background: linear-gradient(180deg, #ef4444, #b91c1c); border-color: #7f1d1d; }
-    button.ghost{ background: #0b1220; }
-
-    /* Header (non-sticky as requested) */
-    .topbar{ margin-bottom: 10px; }
-
-    /* Timer */
-    .timer{ font-variant-numeric: tabular-nums; font-size: clamp(32px, 14vw, 64px); font-weight: 900; }
-    .subtimer { color: var(--muted); font-variant-numeric: tabular-nums; }
-
-    /* Inputs */
-    label{ font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
-    input, select, textarea{ width: 100%; max-width: 100%; background: #0b1220; border: 1px solid rgba(148,163,184,0.18); color: var(--text); border-radius: 10px; padding: 10px 12px; outline: none; min-width: 0; }
-    select{ appearance: none; }
-    .field{ flex:1 1 140px; min-width: 140px; }
-    .field.small{ flex:1 1 110px; min-width: 110px; }
-
-    /* Volume row forces full-width slider on mobile; Test goes to next line */
-    .volume-row{ display:grid; grid-template-columns: 1fr; gap:8px; align-items:center; }
-    .volume-row .inline{ display:flex; gap:8px; align-items:center; }
-    input[type="range"]{ width: 100%; }
-
-    /* Table: no min-width, wrap text, avoid horizontal scroll */
-    .table-wrap{ width: 100%; overflow-x: hidden; }
-    table{ width: 100%; border-collapse: collapse; table-layout: auto; }
-    th, td{ padding: 10px; border-bottom: 1px solid rgba(148,163,184,0.16); text-align: left; vertical-align: top; }
-    th{ font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-    td:nth-child(3){ word-break: break-word; }
-    th:nth-child(1), td:nth-child(1){ width: 64px; }
-    th:nth-child(2), td:nth-child(2){ width: 64px; }
-    th:nth-child(4), td:nth-child(4){ width: 70px; }
-
-    .pill{ padding: 4px 8px; border-radius: 999px; background:#0b1220; border:1px solid rgba(255,255,255,0.12); font-size:12px; white-space: nowrap; }
-    .muted{ color: var(--muted); }
-    .footer{ color: var(--muted); font-size:12px; text-align:center; margin-top: 14px; }
-    .hint{ font-size:12px; color: var(--muted); }
-    .spacer{ height: 8px; }
-    .section-title{ font-weight:800; letter-spacing:-0.02em; }
-
-    /* Small-screen tightening */
-    @media (max-width: 420px){
-      .app-title{ font-size: 20px; }
-      button{ padding: 10px 10px; font-size: 13px; }
-      .controls{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; width:100%; }
-      .field{ flex:1 1 160px; min-width: 160px; }
-      .field.small{ flex:1 1 120px; min-width: 120px; }
-    }
+    .card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0)); border: 1px solid rgba(148,163,184,0.12); border-radius: 16px; padding: 12px; }
+    .row{ display:flex; gap:8px; flex-wrap: wrap; }
+    button{ flex:1 1 48%; border-radius:12px; padding:10px; font-weight:700; }
+    .primary{ background:#10b981; }
+    .warn{ background:#f59e0b; }
+    .danger{ background:#ef4444; }
+    .ghost{ background:#0b1220; }
+    .timer{ font-size:clamp(32px,14vw,64px); font-weight:900; }
+    input, select{ width:100%; max-width:100%; }
+    .field{ flex:1 1 140px; min-width:140px; }
+    .field.small{ flex:1 1 110px; min-width:110px; }
+    .table-wrap{ width:100%; overflow-x:hidden; }
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ padding:8px; border-bottom:1px solid rgba(148,163,184,0.16); text-align:left; }
+    .footer{ text-align:center; font-size:12px; color:var(--muted); margin-top:12px; }
   </style>
 </head>
 <body>
@@ -113,376 +51,87 @@
     </div>
 
     <div class="grid">
-      <!-- Left: Live Timer & Reminders -->
       <div class="card">
-        <div class="row" style="justify-content: space-between; align-items: baseline;">
-          <div>
-            <div class="timer" id="elapsed">00:00</div>
-            <div class="subtimer" id="status">Waiting to start…</div>
-          </div>
-          <div class="row">
-            <span class="pill" id="halfBadge">No Half</span>
-            <span class="pill" id="nextBadge">Next: —</span>
-          </div>
-        </div>
-        <div class="spacer"></div>
+        <div class="timer" id="elapsed">00:00</div>
+        <div class="subtimer" id="status">Waiting to start…</div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>Half</th>
-                <th>Time</th>
-                <th>Reminder</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Half</th><th>Time</th><th>Reminder</th><th></th></tr></thead>
             <tbody id="reminderRows"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Right: Settings & Add Reminder -->
       <div class="card">
         <div class="section-title">Add Reminder</div>
         <div class="row">
-          <div class="field">
-            <label for="half">Half</label>
-            <select id="half">
-              <option value="H1">1st Half</option>
-              <option value="H2">2nd Half</option>
-              <option value="BOTH">Both Halves</option>
-            </select>
-          </div>
-          <div class="field small">
-            <label for="minute">Minute</label>
-            <input id="minute" type="number" min="0" max="30" step="1" value="10" />
-          </div>
-          <div class="field small">
-            <label for="second">Second</label>
-            <input id="second" type="number" min="0" max="59" step="1" value="0" />
-          </div>
+          <div class="field"><label>Half</label><select id="half"><option value="H1">1st Half</option><option value="H2">2nd Half</option><option value="BOTH">Both</option></select></div>
+          <div class="field small"><label>Minute</label><input id="minute" type="number" value="10"></div>
+          <div class="field small"><label>Second</label><input id="second" type="number" value="0"></div>
         </div>
-        <div class="spacer"></div>
-        <label for="message">Message</label>
-        <input id="message" type="text" placeholder="e.g., Bring on new subs" />
-        <div class="spacer"></div>
-        <div class="row">
-          <button id="btnAdd" class="primary">Add Reminder</button>
-          <button id="btnPreset" class="ghost">Load Gaelic Preset</button>
-        </div>
-        <div class="spacer"></div>
-        <div class="section-title">Alert Settings</div>
-        <div class="row">
-          <label style="display:flex; align-items:center; gap:8px;"><input id="speechToggle" type="checkbox" checked> Use Speech</label>
-          <label style="display:flex; align-items:center; gap:8px;"><input id="notifToggle" type="checkbox"> Push Notification</label>
-        </div>
-        <div class="volume-row">
-          <div class="inline">
-            <div style="flex:1">
-              <label for="voiceSelect">Voice</label>
-              <select id="voiceSelect"></select>
-            </div>
-          </div>
-          <div class="inline">
-            <div style="flex:1">
-              <label for="volume">Volume</label>
-              <input id="volume" type="range" min="0" max="1" step="0.05" value="0.8" />
-            </div>
-            <div>
-              <label style="opacity:0">&nbsp;</label>
-              <button id="btnTest" class="ghost" style="white-space:nowrap;">Test</button>
-            </div>
-          </div>
-        </div>
-        <p class="hint">Speech uses your device voice. Notifications require permission and may be silenced by system settings.</p>
-        <div class="section-title">Match Settings</div>
-        <div class="row">
-          <div class="field small">
-            <label for="halfLen">Half Length (min)</label>
-            <input id="halfLen" type="number" min="1" max="45" step="1" value="30" />
-          </div>
-          <div class="field small">
-            <label for="stoppage">Extra Time per Half (sec)</label>
-            <input id="stoppage" type="number" min="0" max="600" step="5" value="0" />
-          </div>
-        </div>
-        <p class="hint">Half length caps whether reminders are considered “on time”. You can still add reminders past the cap.</p>
+        <label>Message</label><input id="message" type="text">
+        <div class="row"><button id="btnAdd" class="primary">Add</button><button id="btnPreset" class="ghost">Load Preset</button></div>
+        <div class="row"><label><input id="speechToggle" type="checkbox" checked>Speech</label><label><input id="notifToggle" type="checkbox">Notification</label></div>
+        <div class="row"><select id="voiceSelect"></select><input id="volume" type="range" min="0" max="1" step="0.05" value="0.8"><button id="btnTest">Test</button></div>
+        <label>Half Length (min)</label><input id="halfLen" type="number" value="30">
+        <label>Extra Time (sec)</label><input id="stoppage" type="number" value="0">
       </div>
     </div>
 
-    <p class="footer">Tip: Add this page to your phone’s home screen. Reminders are saved locally.</p>
+    <p class="footer">Add this page to your Home Screen to enable notifications. Reminders are saved locally.</p>
   </div>
 
 <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+
 (function(){
   const $ = (id)=>document.getElementById(id);
   const reminderRows = $("reminderRows");
-  const btnAdd = $("btnAdd");
-  const btnPreset = $("btnPreset");
-  const btnStartH1 = $("btnStartH1");
-  const btnStartH2 = $("btnStartH2");
-  const btnPause = $("btnPause");
-  const btnReset = $("btnReset");
-  const btnTest = $("btnTest");
-  const halfSel = $("half");
-  const minute = $("minute");
-  const second = $("second");
-  const message = $("message");
-  const elapsedEl = $("elapsed");
-  const statusEl = $("status");
-  const halfBadge = $("halfBadge");
-  const nextBadge = $("nextBadge");
-  const speechToggle = $("speechToggle");
-  const notifToggle = $("notifToggle");
-  const voiceSelect = $("voiceSelect");
-  const volume = $("volume");
-  const halfLen = $("halfLen");
-  const stoppage = $("stoppage");
+  const btnAdd = $("btnAdd"), btnPreset=$("btnPreset"), btnStartH1=$("btnStartH1"), btnStartH2=$("btnStartH2"), btnPause=$("btnPause"), btnReset=$("btnReset"), btnTest=$("btnTest");
+  const halfSel=$("half"), minute=$("minute"), second=$("second"), message=$("message"), elapsedEl=$("elapsed"), statusEl=$("status"), speechToggle=$("speechToggle"), notifToggle=$("notifToggle"), voiceSelect=$("voiceSelect"), volume=$("volume"), halfLen=$("halfLen"), stoppage=$("stoppage");
 
-  // --- State ---
-  let reminders = loadReminders();
-  let half = 0; // 0 none, 1 first, 2 second
-  let hStart = [null, null];
-  let paused = false;
-  let pauseAnchor = null;
-  let pausedAccum = [0,0];
-  let timerId = null;
+  let reminders=loadReminders(); let half=0; let hStart=[null,null]; let paused=false; let pauseAnchor=null; let pausedAccum=[0,0]; let timerId=null;
 
-  // Per-reminder per-half trigger flags
-  function resetTriggers(which){
-    for(const r of reminders){
-      if(which===1||which==='all'){ r.trigH1 = false; }
-      if(which===2||which==='all'){ r.trigH2 = false; }
+  function fmt(t){t=Math.max(0,Math.floor(t));return String(Math.floor(t/60)).padStart(2,'0')+":"+String(t%60).padStart(2,'0');}
+  function now(){return Date.now();}
+
+  function beep(){const ctx=new (window.AudioContext||window.webkitAudioContext)();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=880;gain.gain.value=Number(volume.value||0.8);osc.connect(gain).connect(ctx.destination);osc.start();setTimeout(()=>{osc.stop();ctx.close();},300);}
+
+  function speak(text){if(!('speechSynthesis'in window))return;const u=new SpeechSynthesisUtterance(text);u.volume=Number(volume.value||0.8);window.speechSynthesis.speak(u);}
+
+  async function pushNotify(title,body){
+    if(!('Notification'in window)||!('serviceWorker'in navigator))return;
+    if(Notification.permission!=='granted'){
+      const res=await Notification.requestPermission();
+      if(res!=='granted')return;
     }
-    saveReminders();
-    renderReminders();
+    const reg=await navigator.serviceWorker.getRegistration();
+    if(reg&&reg.showNotification){reg.showNotification(title,{body,icon:'icons/icon-192.png',badge:'icons/icon-192.png'});}
   }
 
-  // --- Utilities ---
-  function fmt(t){ t = Math.max(0, Math.floor(t)); const m = Math.floor(t/60).toString().padStart(2,'0'); const s = (t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
-  function now(){ return Date.now(); }
-  function speechReady(){ return 'speechSynthesis' in window; }
-  function notificationReady(){ return 'Notification' in window; }
+  function alertUser(text){ if(speechToggle.checked){speak(text);} else {beep();} if(notifToggle.checked){pushNotify('Match Reminder',text);} }
 
-  // --- Alerts ---
-  function beep(ms=450){
-    try{
-      const ctx = new (window.AudioContext||window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = 880; // A5
-      gain.gain.value = Number(volume.value || 0.8);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      setTimeout(()=>{ osc.stop(); ctx.close(); }, ms);
-    }catch(e){ /* ignore */ }
-  }
+  function loadReminders(){try{const raw=localStorage.getItem('gf_reminders');if(raw)return JSON.parse(raw);}catch(e){}return [];} function saveReminders(){localStorage.setItem('gf_reminders',JSON.stringify(reminders));}
+  function addReminder(obj){reminders.push({id:Math.random().toString(36).slice(2),half:obj.half,min:obj.min|0,sec:obj.sec|0,msg:obj.msg,trigH1:false,trigH2:false});saveReminders();renderReminders();}
+  function deleteReminder(id){reminders=reminders.filter(r=>r.id!==id);saveReminders();renderReminders();}
 
-  function speak(text){
-    if(!speechReady()) return false;
-    const u = new SpeechSynthesisUtterance(text);
-    const vId = voiceSelect.value;
-    const vs = window.speechSynthesis.getVoices();
-    const v = vs.find(v=>v.name===vId);
-    if(v) u.voice = v;
-    u.volume = Number(volume.value || 0.8);
-    window.speechSynthesis.speak(u);
-    return true;
-  }
+  function renderReminders(){reminderRows.innerHTML='';if(!reminders.length){reminderRows.innerHTML='<tr><td colspan=4>No reminders</td></tr>';return;}reminders.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${r.half}</td><td>${fmt(r.min*60+r.sec)}</td><td>${r.msg}</td><td><button class=ghost onclick="(${deleteReminder})(\"${r.id}\")">X</button></td>`;reminderRows.appendChild(tr);});}
 
-  async function pushNotify(title, body){
-    if(!notificationReady()) return false;
-    if(Notification.permission !== 'granted'){
-      try{ const res = await Notification.requestPermission(); if(res !== 'granted') return false; }
-      catch(e){ return false; }
-    }
-    new Notification(title, { body });
-    return true;
-  }
+  function elapsedSeconds(){if(!half||!hStart[half-1])return 0;let t=(now()-hStart[half-1]);if(paused)t=pauseAnchor-hStart[half-1];return Math.max(0,Math.floor((t-pausedAccum[half-1])/1000));}
+  function tick(){if(!half)return;const e=elapsedSeconds();elapsedEl.textContent=fmt(e);reminders.forEach(r=>{const target=r.min*60+r.sec;if(((r.half==='H1'&&half===1)||(r.half==='H2'&&half===2)||r.half==='BOTH')&&!((half===1?r.trigH1:r.trigH2))&&e>=target){alertUser(r.msg);if(half===1)r.trigH1=true;else r.trigH2=true;saveReminders();renderReminders();}});
+    if(e>=Number(halfLen.value)*60+Number(stoppage.value)){statusEl.textContent='Time up';}}
 
-  function alertUser(text){
-    const usedSpeech = speechToggle.checked ? speak(text) : false;
-    if(!usedSpeech){ beep(); }
-    if(notifToggle.checked){ pushNotify('Match Reminder', text); }
-  }
+  function startHalf(which){half=which;hStart[which-1]=now();paused=false;pausedAccum[which-1]=0;if(!timerId)timerId=setInterval(tick,500);}
 
-  // --- Reminders CRUD ---
-  function loadReminders(){
-    try{
-      const raw = localStorage.getItem('gf_reminders');
-      if(raw){ return JSON.parse(raw); }
-    }catch(e){ }
-    // default empty
-    return [];
-  }
-  function saveReminders(){ try{ localStorage.setItem('gf_reminders', JSON.stringify(reminders)); }catch(e){}
-  }
-  function addReminder(obj){
-    const id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-    reminders.push({ id, half: obj.half, min: obj.min|0, sec: obj.sec|0, msg: obj.msg || '', trigH1:false, trigH2:false });
-    reminders.sort((a,b)=> (orderHalf(a.half)-orderHalf(b.half)) || ((a.min*60+a.sec) - (b.min*60+b.sec)) );
-    saveReminders();
-    renderReminders();
-  }
-  function deleteReminder(id){ reminders = reminders.filter(r=>r.id!==id); saveReminders(); renderReminders(); }
-  function orderHalf(h){ return h==='H1'?1 : h==='H2'?2 : 0; }
+  btnAdd.onclick=()=>addReminder({half:halfSel.value,min:Number(minute.value),sec:Number(second.value),msg:message.value});
+  btnPreset.onclick=()=>{addReminder({half:'H1',min:10,sec:0,msg:'Bring on subs'});addReminder({half:'H1',min:20,sec:0,msg:'Rotate keeper'});addReminder({half:'H2',min:5,sec:0,msg:'More subs'});};
+  btnStartH1.onclick=()=>startHalf(1); btnStartH2.onclick=()=>startHalf(2);
+  btnPause.onclick=()=>{paused=!paused; if(paused)pauseAnchor=now(); else pausedAccum[half-1]+=now()-pauseAnchor;};
+  btnReset.onclick=()=>{half=0;hStart=[null,null];paused=false;pausedAccum=[0,0];clearInterval(timerId);timerId=null;elapsedEl.textContent='00:00';statusEl.textContent='Waiting';};
+  btnTest.onclick=()=>alertUser('Test reminder');
 
-  function renderReminders(){
-    reminderRows.innerHTML = '';
-    if(!reminders.length){
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="4" class="muted">No reminders yet. Add one on the right or load the Gaelic preset.</td>`;
-      reminderRows.appendChild(tr);
-      updateNextBadge();
-      return;
-    }
-    for(const r of reminders){
-      const tr = document.createElement('tr');
-      const halfTxt = r.half==='BOTH'? 'Both' : (r.half==='H1'?'1st':'2nd');
-      const t = fmt(r.min*60 + r.sec);
-      const done = (half===1 && r.trigH1) || (half===2 && r.trigH2);
-      tr.innerHTML = `
-        <td><span class="pill">${halfTxt}</span></td>
-        <td>${t}</td>
-        <td>${r.msg || '<span class="muted">(no text)</span>'}</td>
-        <td style="text-align:right;">
-          <button data-id="${r.id}" class="ghost small del">Delete</button>
-        </td>`;
-      if(done){ tr.style.opacity = 0.5; }
-      reminderRows.appendChild(tr);
-    }
-    document.querySelectorAll('button.del').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        deleteReminder(e.currentTarget.getAttribute('data-id'));
-      });
-    });
-    updateNextBadge();
-  }
-
-  function updateNextBadge(){
-    const e = elapsedSeconds();
-    const candidates = reminders
-      .filter(r=> (half && (r.half==='BOTH' || r.half===('H'+half))) )
-      .map(r=> ({ r, at: r.min*60 + r.sec, trig: half===1? r.trigH1 : r.trigH2 }))
-      .filter(x=> !x.trig && x.at >= e);
-    if(!half || !candidates.length){ nextBadge.textContent = 'Next: —'; return; }
-    candidates.sort((a,b)=>a.at-b.at);
-    nextBadge.textContent = 'Next: ' + fmt(candidates[0].at);
-  }
-
-  // --- Timer Core ---
-  function startHalf(which){
-    if(which!==1 && which!==2) return;
-    if(!hStart[which-1]){ hStart[which-1] = now(); }
-    half = which; paused = false; pauseAnchor = null;
-    statusEl.textContent = (half===1? 'First half running' : 'Second half running');
-    halfBadge.textContent = (half===1? '1st Half' : '2nd Half');
-    if(half===1) resetTriggers(1); else resetTriggers(2);
-    tick();
-    if(!timerId) timerId = setInterval(tick, 300);
-  }
-
-  function pause(){
-    if(!half) return;
-    if(!paused){ paused = true; pauseAnchor = now(); statusEl.textContent = 'Paused'; }
-  }
-  function resume(){
-    if(!half) return;
-    if(paused){ paused = false; const d = now()-pauseAnchor; pausedAccum[half-1] += d; pauseAnchor = null; statusEl.textContent = (half===1? 'First half running' : 'Second half running'); }
-  }
-
-  function reset(){
-    half = 0; hStart = [null,null]; paused = false; pauseAnchor = null; pausedAccum = [0,0];
-    if(timerId){ clearInterval(timerId); timerId = null; }
-    elapsedEl.textContent = '00:00';
-    statusEl.textContent = 'Waiting to start…';
-    halfBadge.textContent = 'No Half';
-    nextBadge.textContent = 'Next: —';
-    resetTriggers('all');
-  }
-
-  function elapsedSeconds(){
-    if(!half || !hStart[half-1]) return 0;
-    let t = (now() - hStart[half-1]);
-    if(paused){ t = pauseAnchor - hStart[half-1]; }
-    return Math.max(0, Math.floor((t - pausedAccum[half-1]) / 1000));
-  }
-
-  function tick(){
-    if(!half){ elapsedEl.textContent = '00:00'; return; }
-    const e = elapsedSeconds();
-    elapsedEl.textContent = fmt(e);
-    updateNextBadge();
-
-    // Fire reminders
-    for(const r of reminders){
-      const matchHalf = (r.half==='BOTH') || (r.half===('H'+half));
-      const target = r.min*60 + r.sec;
-      const already = half===1? r.trigH1 : r.trigH2;
-      if(matchHalf && !already && e >= target){
-        const text = `${fmt(target)} ${r.half==='BOTH'?'':(half===1?'(H1)':'(H2)')}: ${r.msg}`;
-        alertUser(text);
-        if(half===1) r.trigH1 = true; else r.trigH2 = true;
-        saveReminders();
-        renderReminders();
-      }
-    }
-
-    // Soft cap display based on match settings
-    const cap = Number(halfLen.value||30)*60 + Number(stoppage.value||0);
-    if(e >= cap){ statusEl.textContent = (paused? 'Paused' : 'Time up (cap)'); }
-  }
-
-  // --- Voices ---
-  function populateVoices(){
-    if(!speechReady()) { voiceSelect.innerHTML = '<option>Speech unavailable</option>'; return; }
-    const vs = window.speechSynthesis.getVoices();
-    voiceSelect.innerHTML = vs.map(v=>`<option value="${v.name}">${v.name} ${v.lang?('['+v.lang+']'):''}</option>`).join('');
-    // Prefer English/Irish voice if present
-    const pref = vs.findIndex(v=>/en-|ga-/.test(v.lang||''));
-    if(pref>=0) voiceSelect.selectedIndex = pref;
-  }
-  populateVoices();
-  if(speechReady()){ window.speechSynthesis.onvoiceschanged = populateVoices; }
-
-  // --- Events ---
-  btnAdd.addEventListener('click', ()=>{
-    const h = halfSel.value;
-    const m = Math.max(0, Number(minute.value||0));
-    const s = Math.max(0, Number(second.value||0));
-    const msg = (message.value||'').trim();
-    addReminder({ half:h, min:m, sec:s, msg });
-    message.value='';
-  });
-
-  btnPreset.addEventListener('click', ()=>{
-    addReminder({ half:'H1', min:10, sec:0, msg:'Bring on new subs' });
-    addReminder({ half:'H1', min:20, sec:0, msg:'Rotate the goalkeeper' });
-    addReminder({ half:'H2', min:5, sec:0, msg:'Bring on more subs' });
-  });
-
-  btnStartH1.addEventListener('click', ()=> startHalf(1));
-  btnStartH2.addEventListener('click', ()=> startHalf(2));
-
-  btnPause.addEventListener('click', ()=>{
-    if(!half) return;
-    if(paused){ resume(); btnPause.textContent = 'Pause'; }
-    else { pause(); btnPause.textContent = 'Resume'; }
-  });
-
-  btnReset.addEventListener('click', ()=>{ reset(); btnPause.textContent = 'Pause'; });
-
-  btnTest.addEventListener('click', ()=>{
-    alertUser('Test reminder: subs on in two minutes');
-  });
-
-  notifToggle.addEventListener('change', async()=>{
-    if(notifToggle.checked && notificationReady()){
-      try{ const res = await Notification.requestPermission(); if(res!=='granted'){ notifToggle.checked = false; } } catch(e){ notifToggle.checked = false; }
-    }
-  });
-
-  // Initial render
   renderReminders();
 })();
 </script>
