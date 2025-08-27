@@ -1,232 +1,615 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Gaelic Football Match Reminders</title>
-  <link rel="manifest" href="manifest.webmanifest?v=1.0.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/icon-192.png?v=1.0.0">
-  <style>
-    /* keep existing styles from last version (mobile optimized) */
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
-    :root { --bg: #0f172a; --panel: #111827; --muted: #94a3b8; --text: #e5e7eb; --accent: #22c55e; --danger: #ef4444; --warn: #f59e0b; --card: #0b1220; }
-    body{ background: radial-gradient(1200px 600px at 50% -10%, #0b1325 0%, var(--bg) 40%, #030712 100%); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"; padding: 10px; }
-    .container{ max-width: 980px; width: 100%; margin: 0 auto; }
-    .app-title{ font-size: clamp(20px, 5vw, 36px); font-weight: 800; display:flex; flex-wrap:wrap; gap:10px; }
-    .badge{ font-size: 11px; padding: 4px 8px; border-radius: 999px; background: #134e4a; color:#a7f3d0; }
-    .grid{ display:grid; gap: 12px; grid-template-columns: 1fr; }
-    @media(min-width: 900px){ .grid{ grid-template-columns: 2fr 1fr; } }
-    .card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0)); border: 1px solid rgba(148,163,184,0.12); border-radius: 16px; padding: 12px; }
-    .row{ display:flex; gap:8px; flex-wrap: wrap; }
-    button{ flex:1 1 48%; border-radius:12px; padding:10px; font-weight:700; }
-    .primary{ background:#10b981; }
-    .warn{ background:#f59e0b; }
-    .danger{ background:#ef4444; }
-    .ghost{ background:#0b1220; }
-    .timer{ font-size:clamp(32px,14vw,64px); font-weight:900; }
-    input, select{ width:100%; max-width:100%; }
-    .field{ flex:1 1 140px; min-width:140px; }
-    .field.small{ flex:1 1 110px; min-width:110px; }
-    .table-wrap{ width:100%; overflow-x:hidden; }
-    table{ width:100%; border-collapse:collapse; }
-    th, td{ padding:8px; border-bottom:1px solid rgba(148,163,184,0.16); text-align:left; }
-    .footer{ text-align:center; font-size:12px; color:var(--muted); margin-top:12px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="topbar">
-      <div class="row" style="justify-content: space-between;">
-        <div class="app-title">🏐 Gaelic Match Reminders <span class="badge">60 min · 2 × 30</span></div>
-        <div class="controls">
-          <button id="btnStartH1" class="primary">Start 1st Half</button>
-          <button id="btnStartH2" class="warn">Start 2nd Half</button>
-          <button id="btnPause" class="ghost">Pause</button>
-          <button id="btnReset" class="danger">Reset</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="timer" id="elapsed">00:00</div>
-        <div class="subtimer" id="status">Waiting to start…</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Half</th><th>Time</th><th>Reminder</th><th></th></tr></thead>
-            <tbody id="reminderRows"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">Add Reminder</div>
-        <div class="row">
-          <div class="field"><label>Half</label><select id="half"><option value="H1">1st Half</option><option value="H2">2nd Half</option><option value="BOTH">Both</option></select></div>
-          <div class="field small"><label>Minute</label><input id="minute" type="number" value="10"></div>
-          <div class="field small"><label>Second</label><input id="second" type="number" value="0"></div>
-        </div>
-        <label>Message</label><input id="message" type="text">
-        <div class="row"><button id="btnAdd" class="primary">Add</button><button id="btnPreset" class="ghost">Load Preset</button></div>
-        <div class="row"><label><input id="speechToggle" type="checkbox" checked>Speech</label><label><input id="notifToggle" type="checkbox">Notification</label></div>
-        <div class="row"><select id="voiceSelect"></select><input id="volume" type="range" min="0" max="1" step="0.05" value="0.8"><button id="btnTest">Test</button></div>
-        <label>Half Length (min)</label><input id="halfLen" type="number" value="30">
-        <label>Extra Time (sec)</label><input id="stoppage" type="number" value="0">
-      </div>
-    </div>
-
-    <div id="updateBanner" style="display:none; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); background: #111827; border: 1px solid rgba(255,255,255,0.12); color: #e5e7eb; border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); z-index: 50;">
-      <div class="row" style="justify-content: space-between; align-items: center;">
-        <div><strong>Update available</strong> — tap to reload.</div>
-        <div class="row" style="gap:8px;">
-          <button id="btnReload" class="primary" style="flex:0 0 auto;">Reload</button>
-          <button id="btnDismiss" class="ghost" style="flex:0 0 auto;">Dismiss</button>
-        </div>
-      </div>
-    </div>
-
-    <p class="footer">Tip: Add this page to your phone’s home screen. Reminders are saved locally. <span id="appVersion">v1.0.0</span></p>
-  </div>
-
-<script>
-(function(){
-  const $ = (id)=>document.getElementById(id);
-  const reminderRows = $("reminderRows");
-  const btnAdd = $("btnAdd"), btnPreset=$("btnPreset"), btnStartH1=$("btnStartH1"), btnStartH2=$("btnStartH2"), btnPause=$("btnPause"), btnReset=$("btnReset"), btnTest=$("btnTest");
-  const halfSel=$("half"), minute=$("minute"), second=$("second"), message=$("message"), elapsedEl=$("elapsed"), statusEl=$("status"), speechToggle=$("speechToggle"), notifToggle=$("notifToggle"), voiceSelect=$("voiceSelect"), volume=$("volume"), halfLen=$("halfLen"), stoppage=$("stoppage");
-
-  let reminders=loadReminders(); let half=0; let hStart=[null,null]; let paused=false; let pauseAnchor=null; let pausedAccum=[0,0]; let timerId=null;
-
-  // --- Speech / Voices ---
-  function speechReady(){ return 'speechSynthesis' in window; }
-  function populateVoices(){
-    if(!speechReady()) { voiceSelect.innerHTML = '<option value="">Speech unavailable</option>'; return; }
-    const vs = window.speechSynthesis.getVoices();
-    if(!vs || !vs.length){
-      // iOS sometimes loads voices lazily; show placeholder
-      voiceSelect.innerHTML = '<option value="">System default</option>';
-      return;
-    }
-    voiceSelect.innerHTML = vs.map(v=>`<option value="${v.name}">${v.name} ${v.lang?('['+v.lang+']'):''}</option>`).join('');
-    // Try to pick an English/Irish voice if present
-    const prefIdx = vs.findIndex(v=>/^(en-|ga-)/i.test(v.lang||''));
-    if(prefIdx>=0) voiceSelect.selectedIndex = prefIdx;
-  }
-  if(speechReady()){
-    populateVoices();
-    // Some browsers (iOS/Safari) fire this after a user gesture
-    window.speechSynthesis.onvoiceschanged = populateVoices;
-  }
-
-
-  function fmt(t){t=Math.max(0,Math.floor(t));return String(Math.floor(t/60)).padStart(2,'0')+":"+String(t%60).padStart(2,'0');}
-  function now(){return Date.now();}
-
-  function beep(){const ctx=new (window.AudioContext||window.webkitAudioContext)();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=880;gain.gain.value=Number(volume.value||0.8);osc.connect(gain).connect(ctx.destination);osc.start();setTimeout(()=>{osc.stop();ctx.close();},300);}
-
-  function speak(text){
-    if(!speechReady()) return;
-    const u = new SpeechSynthesisUtterance(text);
-    const vs = window.speechSynthesis.getVoices();
-    const sel = voiceSelect && voiceSelect.value;
-    const v = vs && vs.find(x=>x.name===sel);
-    if(v) u.voice = v;
-    u.volume = Number(volume.value || 0.8);
-    window.speechSynthesis.speak(u);
-  }
-
-  async function pushNotify(title,body){
-    if(!('Notification'in window)||!('serviceWorker'in navigator))return;
-    if(Notification.permission!=='granted'){
-      const res=await Notification.requestPermission();
-      if(res!=='granted')return;
-    }
-    const reg=await navigator.serviceWorker.getRegistration();
-    if(reg&&reg.showNotification){reg.showNotification(title,{body,icon:'icons/icon-192.png',badge:'icons/icon-192.png'});}
-  }
-
-  function alertUser(text){ if(speechToggle.checked){speak(text);} else {beep();} if(notifToggle.checked){pushNotify('Match Reminder',text);} }
-
-  function loadReminders(){try{const raw=localStorage.getItem('gf_reminders');if(raw)return JSON.parse(raw);}catch(e){}return [];} function saveReminders(){localStorage.setItem('gf_reminders',JSON.stringify(reminders));}
-  function addReminder(obj){reminders.push({id:Math.random().toString(36).slice(2),half:obj.half,min:obj.min|0,sec:obj.sec|0,msg:obj.msg,trigH1:false,trigH2:false});saveReminders();renderReminders();}
-  function deleteReminder(id){reminders=reminders.filter(r=>r.id!==id);saveReminders();renderReminders();}
-
-  function renderReminders(){reminderRows.innerHTML='';if(!reminders.length){reminderRows.innerHTML='<tr><td colspan=4>No reminders</td></tr>';return;}reminders.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${r.half}</td><td>${fmt(r.min*60+r.sec)}</td><td>${r.msg}</td><td><button class=ghost onclick="(${deleteReminder})(\"${r.id}\")">X</button></td>`;reminderRows.appendChild(tr);});}
-
-  function elapsedSeconds(){if(!half||!hStart[half-1])return 0;let t=(now()-hStart[half-1]);if(paused)t=pauseAnchor-hStart[half-1];return Math.max(0,Math.floor((t-pausedAccum[half-1])/1000));}
-  function tick(){if(!half)return;const e=elapsedSeconds();elapsedEl.textContent=fmt(e);reminders.forEach(r=>{const target=r.min*60+r.sec;if(((r.half==='H1'&&half===1)||(r.half==='H2'&&half===2)||r.half==='BOTH')&&!((half===1?r.trigH1:r.trigH2))&&e>=target){alertUser(r.msg);if(half===1)r.trigH1=true;else r.trigH2=true;saveReminders();renderReminders();}});
-    if(e>=Number(halfLen.value)*60+Number(stoppage.value)){statusEl.textContent='Time up';}}
-
-  function startHalf(which){half=which;hStart[which-1]=now();paused=false;pausedAccum[which-1]=0;if(!timerId)timerId=setInterval(tick,500);}
-
-  btnAdd.onclick=()=>addReminder({half:halfSel.value,min:Number(minute.value),sec:Number(second.value),msg:message.value});
-  btnPreset.onclick=()=>{addReminder({half:'H1',min:10,sec:0,msg:'Bring on subs'});addReminder({half:'H1',min:20,sec:0,msg:'Rotate keeper'});addReminder({half:'H2',min:5,sec:0,msg:'More subs'});};
-  btnStartH1.onclick=()=>startHalf(1); btnStartH2.onclick=()=>startHalf(2);
-  btnPause.onclick=()=>{paused=!paused; if(paused)pauseAnchor=now(); else pausedAccum[half-1]+=now()-pauseAnchor;};
-  btnReset.onclick=()=>{half=0;hStart=[null,null];paused=false;pausedAccum=[0,0];clearInterval(timerId);timerId=null;elapsedEl.textContent='00:00';statusEl.textContent='Waiting';};
-  btnTest.onclick=()=>alertUser('Test reminder');
-
-  renderReminders();
-
-  // If voices are still empty after 1s (iOS quirk), try again
-  setTimeout(()=>{ if(voiceSelect && !voiceSelect.options.length) populateVoices(); }, 1000);
-})();
-</script>
-<script>
-// App version
-window.APP_VERSION = '1.0.0';
-
-// Register the Service Worker and handle update prompt
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=' + encodeURIComponent(window.APP_VERSION))
-    .then(reg => {
-      // Listen for updates
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New update ready
-            const banner = document.getElementById('updateBanner');
-            if (banner) banner.style.display = 'block';
-          }
-        });
-      });
-
-      // If a waiting SW already exists (e.g., returning to page)
-      if (reg.waiting) {
-        const banner = document.getElementById('updateBanner');
-        if (banner) banner.style.display = 'block';
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Gaelic Football Match Reminders</title>
+    <link rel="manifest" href="manifest.webmanifest?v=1.0.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link rel="apple-touch-icon" href="icons/icon-192.png?v=1.0.0" />
+    <style>
+      /* keep existing styles from last version (mobile optimized) */
+      * {
+        box-sizing: border-box;
       }
 
-      // Reload handler
-      const reload = () => {
-        if (reg.waiting) {
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --muted: #94a3b8;
+        --text: #e5e7eb;
+        --accent: #22c55e;
+        --danger: #ef4444;
+        --warn: #f59e0b;
+        --card: #0b1220;
+      }
+
+      body {
+        background: radial-gradient(
+          1200px 600px at 50% -10%,
+          #0b1325 0%,
+          var(--bg) 40%,
+          #030712 100%
+        );
+        color: var(--text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
+        padding: 10px;
+      }
+
+      .container {
+        max-width: 980px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .app-title {
+        font-size: clamp(20px, 5vw, 36px);
+        font-weight: 800;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .badge {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #134e4a;
+        color: #a7f3d0;
+      }
+
+      .grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: 2fr 1fr;
         }
-      };
-      const btnReload = document.getElementById('btnReload');
-      const btnDismiss = document.getElementById('btnDismiss');
-      if (btnReload) btnReload.addEventListener('click', reload);
-      if (btnDismiss) btnDismiss.addEventListener('click', () => {
-        const banner = document.getElementById('updateBanner');
-        if (banner) banner.style.display = 'none';
-      });
+      }
 
-      // Once the new SW activates, reload the page
-      let __hasRefreshed = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (__hasRefreshed) return; // prevent reload loop (Safari quirk)
-        __hasRefreshed = true;
-        window.location.reload();
-      });
+      .card {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0)
+        );
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 16px;
+        padding: 12px;
+      }
 
-    })
-    .catch(()=>{});
-}
-</script>
-</body>
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        flex: 1 1 48%;
+        border-radius: 12px;
+        padding: 10px;
+        font-weight: 700;
+      }
+
+      .primary {
+        background: #10b981;
+      }
+
+      .warn {
+        background: #f59e0b;
+      }
+
+      .danger {
+        background: #ef4444;
+      }
+
+      .ghost {
+        background: #0b1220;
+      }
+
+      .timer {
+        font-size: clamp(32px, 14vw, 64px);
+        font-weight: 900;
+      }
+
+      input,
+      select {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .field {
+        flex: 1 1 140px;
+        min-width: 140px;
+      }
+
+      .field.small {
+        flex: 1 1 110px;
+        min-width: 110px;
+      }
+
+      .table-wrap {
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        text-align: left;
+      }
+
+      .footer {
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="row" style="justify-content: space-between">
+          <div class="app-title">
+            🏐 Gaelic Match Reminders <span class="badge">60 min · 2 × 30</span>
+          </div>
+          <div class="controls">
+            <button id="btnStartH1" class="primary">Start 1st Half</button>
+            <button id="btnStartH2" class="warn">Start 2nd Half</button>
+            <button id="btnPause" class="ghost">Pause</button>
+            <button id="btnReset" class="danger">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="timer" id="elapsed">00:00</div>
+          <div class="subtimer" id="status">Waiting to start…</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Half</th>
+                  <th>Time</th>
+                  <th>Reminder</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="reminderRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Add Reminder</div>
+          <div class="row">
+            <div class="field">
+              <label>Half</label
+              ><select id="half">
+                <option value="H1">1st Half</option>
+                <option value="H2">2nd Half</option>
+                <option value="BOTH">Both</option>
+              </select>
+            </div>
+            <div class="field small">
+              <label>Minute</label
+              ><input id="minute" type="number" value="10" />
+            </div>
+            <div class="field small">
+              <label>Second</label><input id="second" type="number" value="0" />
+            </div>
+          </div>
+          <label>Message</label><input id="message" type="text" />
+          <div class="row">
+            <button id="btnAdd" class="primary">Add</button
+            ><button id="btnPreset" class="ghost">Load Preset</button>
+          </div>
+          <div class="row">
+            <label
+              ><input id="speechToggle" type="checkbox" checked />Speech</label
+            ><label
+              ><input id="notifToggle" type="checkbox" />Notification</label
+            >
+          </div>
+          <div class="row">
+            <select id="voiceSelect"></select
+            ><input
+              id="volume"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value="0.8"
+            /><button id="btnTest">Test</button>
+          </div>
+          <label>Half Length (min)</label
+          ><input id="halfLen" type="number" value="30" />
+          <label>Extra Time (sec)</label
+          ><input id="stoppage" type="number" value="0" />
+        </div>
+      </div>
+
+      <div
+        id="updateBanner"
+        style="
+          display: none;
+          position: fixed;
+          left: 12px;
+          right: 12px;
+          bottom: calc(12px + env(safe-area-inset-bottom));
+          background: #111827;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          color: #e5e7eb;
+          border-radius: 12px;
+          padding: 10px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+          z-index: 50;
+        "
+      >
+        <div
+          class="row"
+          style="justify-content: space-between; align-items: center"
+        >
+          <div><strong>Update available</strong> — tap to reload.</div>
+          <div class="row" style="gap: 8px">
+            <button id="btnReload" class="primary" style="flex: 0 0 auto">
+              Reload
+            </button>
+            <button id="btnDismiss" class="ghost" style="flex: 0 0 auto">
+              Dismiss
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="footer">
+        Tip: Add this page to your phone’s home screen. Reminders are saved
+        locally. <span id="appVersion">v1.0.0</span>
+      </p>
+    </div>
+
+    <script>
+      (function () {
+        const $ = (id) => document.getElementById(id);
+        const reminderRows = $("reminderRows");
+        const btnAdd = $("btnAdd"),
+          btnPreset = $("btnPreset"),
+          btnStartH1 = $("btnStartH1"),
+          btnStartH2 = $("btnStartH2"),
+          btnPause = $("btnPause"),
+          btnReset = $("btnReset"),
+          btnTest = $("btnTest");
+        const halfSel = $("half"),
+          minute = $("minute"),
+          second = $("second"),
+          message = $("message"),
+          elapsedEl = $("elapsed"),
+          statusEl = $("status"),
+          speechToggle = $("speechToggle"),
+          notifToggle = $("notifToggle"),
+          voiceSelect = $("voiceSelect"),
+          volume = $("volume"),
+          halfLen = $("halfLen"),
+          stoppage = $("stoppage");
+
+        let reminders = loadReminders();
+        let half = 0;
+        let hStart = [null, null];
+        let paused = false;
+        let pauseAnchor = null;
+        let pausedAccum = [0, 0];
+        let timerId = null;
+
+        // --- Speech / Voices ---
+        function speechReady() {
+          return "speechSynthesis" in window;
+        }
+        function populateVoices() {
+          if (!speechReady()) {
+            voiceSelect.innerHTML =
+              '<option value="">Speech unavailable</option>';
+            return;
+          }
+          const vs = window.speechSynthesis.getVoices();
+          if (!vs || !vs.length) {
+            // iOS sometimes loads voices lazily; show placeholder
+            voiceSelect.innerHTML = '<option value="">System default</option>';
+            return;
+          }
+          voiceSelect.innerHTML = vs
+            .map(
+              (v) =>
+                `<option value="${v.name}">${v.name} ${
+                  v.lang ? "[" + v.lang + "]" : ""
+                }</option>`
+            )
+            .join("");
+          // Try to pick an English/Irish voice if present
+          const prefIdx = vs.findIndex((v) => /^(en-|ga-)/i.test(v.lang || ""));
+          if (prefIdx >= 0) voiceSelect.selectedIndex = prefIdx;
+        }
+        if (speechReady()) {
+          populateVoices();
+          // Some browsers (iOS/Safari) fire this after a user gesture
+          window.speechSynthesis.onvoiceschanged = populateVoices;
+        }
+
+        function fmt(t) {
+          t = Math.max(0, Math.floor(t));
+          return (
+            String(Math.floor(t / 60)).padStart(2, "0") +
+            ":" +
+            String(t % 60).padStart(2, "0")
+          );
+        }
+        function now() {
+          return Date.now();
+        }
+
+        function beep() {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = 880;
+          gain.gain.value = Number(volume.value || 0.8);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start();
+          setTimeout(() => {
+            osc.stop();
+            ctx.close();
+          }, 300);
+        }
+
+        function speak(text) {
+          if (!speechReady()) return;
+          const u = new SpeechSynthesisUtterance(text);
+          const vs = window.speechSynthesis.getVoices();
+          const sel = voiceSelect && voiceSelect.value;
+          const v = vs && vs.find((x) => x.name === sel);
+          if (v) u.voice = v;
+          u.volume = Number(volume.value || 0.8);
+          window.speechSynthesis.speak(u);
+        }
+
+        async function pushNotify(title, body) {
+          if (!("Notification" in window) || !("serviceWorker" in navigator))
+            return;
+          if (Notification.permission !== "granted") {
+            const res = await Notification.requestPermission();
+            if (res !== "granted") return;
+          }
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg && reg.showNotification) {
+            reg.showNotification(title, {
+              body,
+              icon: "icons/icon-192.png",
+              badge: "icons/icon-192.png",
+            });
+          }
+        }
+
+        function alertUser(text) {
+          if (speechToggle.checked) {
+            speak(text);
+          } else {
+            beep();
+          }
+          if (notifToggle.checked) {
+            pushNotify("Match Reminder", text);
+          }
+        }
+
+        function loadReminders() {
+          try {
+            const raw = localStorage.getItem("gf_reminders");
+            if (raw) return JSON.parse(raw);
+          } catch (e) {}
+          return [];
+        }
+        function saveReminders() {
+          localStorage.setItem("gf_reminders", JSON.stringify(reminders));
+        }
+        function addReminder(obj) {
+          reminders.push({
+            id: Math.random().toString(36).slice(2),
+            half: obj.half,
+            min: obj.min | 0,
+            sec: obj.sec | 0,
+            msg: obj.msg,
+            trigH1: false,
+            trigH2: false,
+          });
+          saveReminders();
+          renderReminders();
+        }
+        function deleteReminder(id) {
+          reminders = reminders.filter((r) => r.id !== id);
+          saveReminders();
+          renderReminders();
+        }
+
+        function renderReminders() {
+          reminderRows.innerHTML = ""; // Clear existing rows
+          if (!reminders.length) {
+            reminderRows.innerHTML = "<tr><td colspan=4>No reminders</td></tr>";
+            return;
+          }
+          reminders.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${r.half}</td>
+              <td>${fmt(r.min * 60 + r.sec)}</td>
+              <td>${r.msg}</td>
+              <td><button class="ghost">X</button></td>
+            `;
+            const deleteButton = tr.querySelector("button");
+            deleteButton.addEventListener("click", () => deleteReminder(r.id)); // Attach event listener
+            reminderRows.appendChild(tr);
+          });
+        }
+
+        function elapsedSeconds() {
+          if (!half || !hStart[half - 1]) return 0;
+          let t = now() - hStart[half - 1];
+          if (paused) t = pauseAnchor - hStart[half - 1];
+          return Math.max(0, Math.floor((t - pausedAccum[half - 1]) / 1000));
+        }
+        function tick() {
+          if (!half) return;
+          const e = elapsedSeconds();
+          elapsedEl.textContent = fmt(e);
+          reminders.forEach((r) => {
+            const target = r.min * 60 + r.sec;
+            if (
+              ((r.half === "H1" && half === 1) ||
+                (r.half === "H2" && half === 2) ||
+                r.half === "BOTH") &&
+              !(half === 1 ? r.trigH1 : r.trigH2) &&
+              e >= target
+            ) {
+              alertUser(r.msg);
+              if (half === 1) r.trigH1 = true;
+              else r.trigH2 = true;
+              saveReminders();
+              renderReminders();
+            }
+          });
+          if (e >= Number(halfLen.value) * 60 + Number(stoppage.value)) {
+            statusEl.textContent = "Time up";
+          }
+        }
+
+        function startHalf(which) {
+          half = which;
+          hStart[which - 1] = now();
+          paused = false;
+          pausedAccum[which - 1] = 0;
+          if (!timerId) timerId = setInterval(tick, 500);
+        }
+
+        btnAdd.onclick = () =>
+          addReminder({
+            half: halfSel.value,
+            min: Number(minute.value),
+            sec: Number(second.value),
+            msg: message.value,
+          });
+        btnPreset.onclick = () => {
+          addReminder({ half: "H1", min: 10, sec: 0, msg: "Bring on subs" });
+          addReminder({ half: "H1", min: 20, sec: 0, msg: "Rotate keeper" });
+          addReminder({ half: "H2", min: 5, sec: 0, msg: "More subs" });
+        };
+        btnStartH1.onclick = () => startHalf(1);
+        btnStartH2.onclick = () => startHalf(2);
+        btnPause.onclick = () => {
+          paused = !paused;
+          if (paused) pauseAnchor = now();
+          else pausedAccum[half - 1] += now() - pauseAnchor;
+        };
+        btnReset.onclick = () => {
+          half = 0;
+          hStart = [null, null];
+          paused = false;
+          pausedAccum = [0, 0];
+          clearInterval(timerId);
+          timerId = null;
+          elapsedEl.textContent = "00:00";
+          statusEl.textContent = "Waiting";
+        };
+        btnTest.onclick = () => alertUser("Test reminder");
+
+        renderReminders();
+
+        // If voices are still empty after 1s (iOS quirk), try again
+        setTimeout(() => {
+          if (voiceSelect && !voiceSelect.options.length) populateVoices();
+        }, 1000);
+      })();
+    </script>
+    <script>
+      // App version
+      window.APP_VERSION = "1.0.0";
+
+      // Register the Service Worker and handle update prompt
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("./sw.js?v=" + encodeURIComponent(window.APP_VERSION))
+          .then((reg) => {
+            // Listen for updates
+            reg.addEventListener("updatefound", () => {
+              const newWorker = reg.installing;
+              if (!newWorker) return;
+              newWorker.addEventListener("statechange", () => {
+                if (
+                  newWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  // New update ready
+                  const banner = document.getElementById("updateBanner");
+                  if (banner) banner.style.display = "block";
+                }
+              });
+            });
+
+            // If a waiting SW already exists (e.g., returning to page)
+            if (reg.waiting) {
+              const banner = document.getElementById("updateBanner");
+              if (banner) banner.style.display = "block";
+            }
+
+            // Reload handler
+            const reload = () => {
+              if (reg.waiting) {
+                reg.waiting.postMessage({ type: "SKIP_WAITING" });
+              }
+            };
+            const btnReload = document.getElementById("btnReload");
+            const btnDismiss = document.getElementById("btnDismiss");
+            if (btnReload) btnReload.addEventListener("click", reload);
+            if (btnDismiss)
+              btnDismiss.addEventListener("click", () => {
+                const banner = document.getElementById("updateBanner");
+                if (banner) banner.style.display = "none";
+              });
+
+            // Once the new SW activates, reload the page
+            let __hasRefreshed = false;
+            navigator.serviceWorker.addEventListener("controllerchange", () => {
+              if (__hasRefreshed) return; // prevent reload loop (Safari quirk)
+              __hasRefreshed = true;
+              window.location.reload();
+            });
+          })
+          .catch(() => {});
+      }
+    </script>
+  </body>
 </html>
