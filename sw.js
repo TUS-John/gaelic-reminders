@@ -1,5 +1,5 @@
 // Service Worker for Gaelic Match Reminders
-const SW_VERSION = "1.0.0";
+const SW_VERSION = "1.0.1";
 
 self.addEventListener("install", () => self.skipWaiting());
 
