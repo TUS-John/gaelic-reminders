@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gaelic Football Match Reminders</title>
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="manifest.webmanifest?v=1.0.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png?v=1.0.0">
   <style>
     /* keep existing styles from last version (mobile optimized) */
     * { box-sizing: border-box; }
@@ -78,7 +78,17 @@
       </div>
     </div>
 
-    <p class="footer">Add this page to your Home Screen to enable notifications. Reminders are saved locally.</p>
+    <div id="updateBanner" style="display:none; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); background: #111827; border: 1px solid rgba(255,255,255,0.12); color: #e5e7eb; border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); z-index: 50;">
+      <div class="row" style="justify-content: space-between; align-items: center;">
+        <div><strong>Update available</strong> — tap to reload.</div>
+        <div class="row" style="gap:8px;">
+          <button id="btnReload" class="primary" style="flex:0 0 auto;">Reload</button>
+          <button id="btnDismiss" class="ghost" style="flex:0 0 auto;">Dismiss</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="footer">Tip: Add this page to your phone’s home screen. Reminders are saved locally. <span id="appVersion">v1.0.0</span></p>
   </div>
 
 <script>
@@ -168,6 +178,55 @@ if ('serviceWorker' in navigator) {
   // If voices are still empty after 1s (iOS quirk), try again
   setTimeout(()=>{ if(voiceSelect && !voiceSelect.options.length) populateVoices(); }, 1000);
 })();
+</script>
+<script>
+// App version
+window.APP_VERSION = '1.0.0';
+
+// Register the Service Worker and handle update prompt
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js?v=' + encodeURIComponent(window.APP_VERSION))
+    .then(reg => {
+      // Listen for updates
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New update ready
+            const banner = document.getElementById('updateBanner');
+            if (banner) banner.style.display = 'block';
+          }
+        });
+      });
+
+      // If a waiting SW already exists (e.g., returning to page)
+      if (reg.waiting) {
+        const banner = document.getElementById('updateBanner');
+        if (banner) banner.style.display = 'block';
+      }
+
+      // Reload handler
+      const reload = () => {
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      };
+      const btnReload = document.getElementById('btnReload');
+      const btnDismiss = document.getElementById('btnDismiss');
+      if (btnReload) btnReload.addEventListener('click', reload);
+      if (btnDismiss) btnDismiss.addEventListener('click', () => {
+        const banner = document.getElementById('updateBanner');
+        if (banner) banner.style.display = 'none';
+      });
+
+      // Once the new SW activates, reload the page
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    })
+    .catch(()=>{});
+}
 </script>
 </body>
 </html>

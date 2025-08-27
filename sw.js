@@ -1,7 +1,20 @@
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+// Service Worker for Gaelic Match Reminders
+const SW_VERSION = '1.0.0';
 
-// Handle clicks on notifications to focus or open the app
+self.addEventListener('install', () => self.skipWaiting());
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+// Allow the page to tell this SW to activate immediately after update
+self.addEventListener('message', (event) => {
+  if (event && event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Focus/open the app when a notification is tapped
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
